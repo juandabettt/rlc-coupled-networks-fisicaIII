@@ -1,0 +1,37 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- Entornos virtuales ---
+.venv/
+venv/
+env/
+
+# --- Editores ---
+.idea/
+.vscode/
+
+# --- Resultados regenerables y pesados ---
+resultados/datos/*
+!resultados/datos/.gitkeep
+resultados/videos/*
+!resultados/videos/.gitkeep
+
+# --- LaTeX (si el informe se escribe aquí) ---
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.bbl
+*.blg
+
+# --- Windows / OneDrive / Office ---
+desktop.ini
+Thumbs.db
+~$*

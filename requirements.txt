@@ -1,0 +1,12 @@
+# Cálculo numérico: arreglos, álgebra lineal (eigh para la solución modal)
+numpy>=1.26
+# Integración (solve_ivp con DOP853) y ajustes (curve_fit)
+scipy>=1.11
+# Generación de topologías y distancias topológicas
+networkx>=3.2
+# Gráficos y animaciones
+matplotlib>=3.8
+# Binario de ffmpeg para guardar los videos .mp4 desde matplotlib
+imageio-ffmpeg>=0.4.9
+# Pruebas de validación
+pytest>=8.0
