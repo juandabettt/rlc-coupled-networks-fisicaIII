@@ -27,11 +27,12 @@ Parámetros base: L = 1 mH, C = 1 µF, R = 1 Ω, Q₀ = 1 µC, T = 10/γ, κ = K
 proyecto_final_fisicaIII/
 ├── README.md            # Este archivo
 ├── requirements.txt     # Dependencias de Python
+├── pytest.ini           # Configuración de las pruebas
 ├── .gitignore
 ├── docs/                # Teoría (Fase 1), plan y enunciado en PDF
 ├── red_rlc/             # Paquete con el código del modelo (Fase 2 en adelante)
 │   ├── __init__.py
-│   ├── redes.py         # Generación de topologías y distancias       (pendiente)
+│   ├── redes.py         # Generación de topologías y distancias       (listo)
 │   ├── modelo.py        # Sistema de primer orden e integración        (pendiente)
 │   ├── analisis.py      # Energías, tiempos de llegada, estadísticas   (pendiente)
 │   ├── ajustes.py       # Ajustes funcionales                          (pendiente)
@@ -39,6 +40,7 @@ proyecto_final_fisicaIII/
 │   └── videos.py        # Animaciones de log₁₀(Eᵢ/E₀)                  (pendiente)
 ├── scripts/             # Un script por experimento numérico (E1, E2, …)
 ├── tests/               # Validación: K = 0, casos límite, convergencia
+│   └── test_redes.py    # Pruebas de redes.py                          (listo)
 └── resultados/
     ├── datos/           # Resultados numéricos (.npz, .csv) — no se versionan
     ├── figuras/         # Gráficos finales (.png, .pdf)
@@ -47,9 +49,9 @@ proyecto_final_fisicaIII/
 
 ## Instalación
 
-Se requiere Python 3.10 o superior. Se recomienda crear el entorno virtual
-**fuera de la carpeta de OneDrive**, para que OneDrive no sincronice miles de
-archivos de librerías:
+Se requiere Python 3.10 o superior. Se recomienda tener el proyecto y el
+entorno virtual **fuera de carpetas sincronizadas como OneDrive**, para que no
+se sincronicen miles de archivos de librerías (el versionado lo hace Git):
 
 ```bash
 # Windows (PowerShell)
