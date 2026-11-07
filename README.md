@@ -33,14 +33,17 @@ proyecto_final_fisicaIII/
 ├── red_rlc/             # Paquete con el código del modelo (Fase 2 en adelante)
 │   ├── __init__.py
 │   ├── redes.py         # Generación de topologías y distancias       (listo)
-│   ├── modelo.py        # Sistema de primer orden e integración        (en curso)
+│   ├── modelo.py        # Sistema de primer orden e integración        (listo)
 │   ├── analisis.py      # Energías, tiempos de llegada, estadísticas   (en curso)
 │   ├── ajustes.py       # Ajustes funcionales                          (pendiente)
 │   ├── graficos.py      # Gráficos G1 a G10                            (pendiente)
 │   └── videos.py        # Animaciones de log₁₀(Eᵢ/E₀)                  (pendiente)
 ├── scripts/             # Un script por experimento numérico (E1, E2, …)
 ├── tests/               # Validación: K = 0, casos límite, convergencia
-│   └── test_redes.py    # Pruebas de redes.py                          (listo)
+│   ├── conftest.py      # Caché de simulaciones compartida
+│   ├── test_redes.py    # Pruebas de redes.py                          (listo)
+│   ├── test_modelo.py   # Pruebas del modelo y validación del plan     (listo)
+│   └── test_energia.py  # Pruebas de energía y balance de H            (listo)
 └── resultados/
     ├── datos/           # Resultados numéricos (.npz, .csv) — no se versionan
     ├── figuras/         # Gráficos finales (.png, .pdf)

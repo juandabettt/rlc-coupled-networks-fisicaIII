@@ -224,6 +224,59 @@ def integrar_dop853(Lambda: np.ndarray, p: Parametros, t: np.ndarray,
 
 
 # ---------------------------------------------------------------------------
+# Integración con RK4 propio (prueba de convergencia y explicación del método)
+# ---------------------------------------------------------------------------
+
+def integrar_rk4(Lambda: np.ndarray, p: Parametros, t: np.ndarray,
+                 Q_ini: np.ndarray, I_ini: np.ndarray, subpasos: int = 1):
+    """Runge–Kutta clásico de orden 4, con paso fijo.
+
+    No genera los resultados del proyecto (para eso está DOP853). Sirve para
+    comprobar que el error baja como h⁴ y para explicar el algoritmo en la
+    exposición: en cada paso se evalúa la pendiente cuatro veces y se combinan
+    con pesos 1/6, 2/6, 2/6, 1/6.
+
+    Parámetros
+    ----------
+    t : instantes equiespaciados donde se guarda la solución.
+    subpasos : pasos de RK4 entre dos instantes guardados; el paso es
+        h = (t[1] − t[0]) / subpasos.
+
+    Devuelve Q, I con forma (n_t, N) e `info` con el paso usado.
+    """
+    dt = np.diff(t)
+    if not np.allclose(dt, dt[0], rtol=1e-9, atol=0):
+        raise ValueError("RK4 de paso fijo necesita instantes equiespaciados.")
+    h = dt[0] / subpasos
+    M = matriz_rigidez(Lambda, p)
+    gamma = p.gamma
+
+    def pendiente(Q, I):
+        # Q̇ = I,  İ = −γ I − M Q
+        return I, -gamma * I - M @ Q
+
+    N = Lambda.shape[0]
+    Qs = np.empty((t.size, N))
+    Is = np.empty((t.size, N))
+    Q, I = Q_ini.astype(float).copy(), I_ini.astype(float).copy()
+    Qs[0], Is[0] = Q, I
+
+    inicio = time.perf_counter()
+    for n in range(1, t.size):
+        for _ in range(subpasos):
+            k1Q, k1I = pendiente(Q, I)
+            k2Q, k2I = pendiente(Q + h / 2 * k1Q, I + h / 2 * k1I)
+            k3Q, k3I = pendiente(Q + h / 2 * k2Q, I + h / 2 * k2I)
+            k4Q, k4I = pendiente(Q + h * k3Q, I + h * k3I)
+            Q = Q + h / 6 * (k1Q + 2 * k2Q + 2 * k3Q + k4Q)
+            I = I + h / 6 * (k1I + 2 * k2I + 2 * k3I + k4I)
+        Qs[n], Is[n] = Q, I
+    info = {"h": h, "pasos": (t.size - 1) * subpasos,
+            "tiempo_s": time.perf_counter() - inicio}
+    return Qs, Is, info
+
+
+# ---------------------------------------------------------------------------
 # Solución exacta por modos normales
 # ---------------------------------------------------------------------------
 
@@ -375,7 +428,7 @@ class Simulacion:
         return self.parametros.gamma * self.t
 
 
-METODOS = ("dop853", "modal")
+METODOS = ("dop853", "modal", "rk4")
 
 
 def simular(red, p: Parametros, metodo: str = "dop853", T: float | None = None,
@@ -387,11 +440,13 @@ def simular(red, p: Parametros, metodo: str = "dop853", T: float | None = None,
     ----------
     red : `redes.Red` (usa su laplaciano, su fuente y su nombre).
     p : parámetros físicos.
-    metodo : "dop853" (resultados) o "modal" (referencia exacta).
+    metodo : "dop853" (resultados), "modal" (referencia exacta) o "rk4"
+        (paso fijo, para la prueba de convergencia).
     T : duración (s); por defecto p.T = n_decaimientos/γ.
     puntos_por_periodo : muestras por período del modo más rápido.
     t : instantes explícitos; si se dan, ignora T y puntos_por_periodo.
-    opciones : se pasan a `integrar_dop853` (rtol, atol_relativa, denso).
+    opciones : se pasan al integrador: rtol, atol_relativa y denso para
+        DOP853; subpasos para RK4.
     """
     if metodo not in METODOS:
         raise ValueError(f"Método desconocido {metodo!r}; opciones: {METODOS}")
@@ -403,6 +458,8 @@ def simular(red, p: Parametros, metodo: str = "dop853", T: float | None = None,
 
     if metodo == "dop853":
         Q, I, info = integrar_dop853(Lambda, p, t, Q_ini, I_ini, **opciones)
+    elif metodo == "rk4":
+        Q, I, info = integrar_rk4(Lambda, p, t, Q_ini, I_ini, **opciones)
     else:
         inicio = time.perf_counter()
         Q, I = solucion_modal(Lambda, p, t, Q_ini, I_ini)

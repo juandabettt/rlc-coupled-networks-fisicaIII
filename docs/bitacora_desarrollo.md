@@ -5,7 +5,7 @@ parte y qué se ha comprobado. Se actualiza con cada avance; la sección
 «Registro de cambios» al final lleva el historial.
 
 - **Última actualización:** 6 de noviembre de 2026
-- **Fase actual:** Fase 2, código y validación (avance ≈ 55 %)
+- **Fase actual:** Fase 2, código y validación (avance ≈ 85 %)
 
 ## 1. Estado general
 
@@ -22,11 +22,13 @@ validación del plan.
 |------|-------|--------|
 | 0 | Entorno de trabajo (Python, entorno virtual, Git, pytest) | ✅ Listo |
 | 1 | `redes.py`: topologías, laplaciano, distancias, caminos | ✅ Listo y probado (47 pruebas) |
-| 2 | `modelo.py`: parámetros, DOP853, solución modal | ✅ Implementado y verificado a mano; faltan sus pruebas automáticas |
-| 3 | Energía: Eᵢ, U, H y potencia disipada (`analisis.py`) | ✅ Implementado y verificado a mano; faltan sus pruebas automáticas |
-| 4 | Pruebas de validación del modelo (9 del plan) | ⏳ Pendiente |
-| 5 | RK4 propio y prueba de convergencia | ⏳ Pendiente |
+| 2 | `modelo.py`: parámetros, DOP853, solución modal | ✅ Listo y probado |
+| 3 | Energía: Eᵢ, U, H y potencia disipada (`analisis.py`) | ✅ Listo y probado |
+| 4 | Pruebas de validación del modelo (las 9 del plan) | ✅ Las 9 aprobadas (ver sección 7) |
+| 5 | RK4 propio y prueba de convergencia | ✅ Orden observado de 3.97 a 4.00 |
 | 6 | Pseudocódigo y diagrama de flujo | ⏳ Pendiente |
+
+**Pruebas automáticas:** 120 en total, todas aprobadas; tardan unos 16 s.
 
 ## 2. Entorno de trabajo
 
@@ -73,7 +75,7 @@ redes.py  ──►  modelo.py  ──►  analisis.py  ──►  ajustes.py
 | Módulo | Función | Estado |
 |--------|---------|--------|
 | `redes.py` | Construye las redes y sus cantidades estructurales | ✅ |
-| `modelo.py` | Resuelve la dinámica Q(t), I(t) | ✅ (sin pruebas aún) |
+| `modelo.py` | Resuelve la dinámica Q(t), I(t) | ✅ |
 | `analisis.py` | Energías, tiempos de llegada, estadísticas por distancia | 🟡 Parte de energía lista; faltan tiempos de llegada y estadísticas (Fase 3) |
 | `ajustes.py` | Ajustes funcionales y comparación con AICc | ⏳ |
 | `graficos.py` | Gráficos G1 a G10 | ⏳ |
@@ -218,6 +220,38 @@ Detalles de la implementación:
   vₙ(i)vₙ(0), que el experimento E4 usará para explicar por qué nodos a igual
   distancia responden distinto.
 
+### Integrador de comprobación: RK4 propio (`integrar_rk4`)
+
+Es el Runge–Kutta clásico de orden 4, con paso fijo y escrito a mano. No
+genera resultados. Cumple dos funciones:
+
+- **Prueba de convergencia del plan:** al dividir el paso entre 2, el error
+  debe bajar 2⁴ = 16 veces.
+- **Explicación del algoritmo en la exposición.**
+
+En cada paso se evalúa la pendiente cuatro veces (k₁ a k₄) y se combinan:
+
+```
+k₁ = f(yₙ)
+k₂ = f(yₙ + h/2 · k₁)
+k₃ = f(yₙ + h/2 · k₂)
+k₄ = f(yₙ + h · k₃)
+yₙ₊₁ = yₙ + h/6 · (k₁ + 2k₂ + 2k₃ + k₄)
+```
+
+Aquí y = (Q, I) y f(Q, I) = (I, −γI − MQ). El parámetro `subpasos` divide cada
+intervalo de muestreo en varios pasos de RK4. Se usa con
+`simular(red, p, "rk4", subpasos=...)`.
+
+**Orden observado** (malla, κ = 1, 2 ms, frente a la solución modal):
+
+| Paso h | Error máximo / Q₀ | Orden |
+|--------|-------------------|-------|
+| 6.7 µs | 1.4 × 10⁻² | — |
+| 3.3 µs | 9.0 × 10⁻⁴ | 3.97 |
+| 1.7 µs | 5.6 × 10⁻⁵ | 4.00 |
+| 0.84 µs | 3.5 × 10⁻⁶ | 4.00 |
+
 ### Muestreo temporal (`malla_temporal`)
 
 Los instantes guardados son equiespaciados, con **100 muestras por período del
@@ -232,7 +266,7 @@ con κ grande, la red oscila hasta 9 veces más rápido que ω₀.
 
 ### Entrada de alto nivel (`simular`)
 
-`simular(red, p, metodo="dop853" | "modal")` hace tres cosas:
+`simular(red, p, metodo="dop853" | "modal" | "rk4")` hace tres cosas:
 
 1. Fija las condiciones iniciales del PDF: Q₀ en la fuente, el resto en cero y
    todas las corrientes nulas.
@@ -244,9 +278,10 @@ con κ grande, la red oscila hasta 9 veces más rápido que ω₀.
 
 `sim.t_gamma` da el tiempo adimensional γt que usan los gráficos.
 
-### Verificación hecha a mano
+### Verificación inicial
 
-Es una comprobación previa. Pasará a pruebas automáticas en el paso 4.
+Fue la primera comprobación, hecha a mano. Ya forma parte de las pruebas
+automáticas (sección 7).
 
 | Comprobación | Resultado |
 |--------------|-----------|
@@ -309,7 +344,10 @@ Se usa la forma integrada y no la derivada, porque derivar datos muestreados
 amplifica el ruido. La integral se calcula con Simpson acumulado (error ∝ h⁴),
 que es más preciso que el trapecio usado en la prueba de la Fase 1.
 
-### Verificación hecha a mano
+### Verificación inicial
+
+Primera comprobación, hecha a mano; ya forma parte de las pruebas automáticas
+(sección 7).
 
 **Malla con fuente interior (k₀ = 4).** Se compara con la tabla del punto 5 de
 la teoría.
@@ -337,7 +375,59 @@ Coincide con la Fase 1 en todas las columnas.
   −RIᵢ² + Pᵢ se cumple con un error de 10⁻⁶ respecto al máximo de Eᵢ.
 - **Fracción ⟨Eᵢ⟩/Σ⟨Eⱼ⟩:** suma exactamente 1.
 
-## 7. Hallazgos y decisiones
+## 7. Pruebas automáticas
+
+Hay 120 pruebas en total, que se corren con `python -m pytest`. Ningún
+resultado se analiza antes de que todas pasen.
+
+| Archivo | Pruebas | Qué cubre |
+|---------|---------|-----------|
+| `tests/test_redes.py` | 47 | Topologías, laplaciano, distancias, caminos, semillas (sección 4) |
+| `tests/test_modelo.py` | 38 | Parámetros, integradores, solución modal y 6 pruebas del plan |
+| `tests/test_energia.py` | 35 | Fórmulas de energía y 3 pruebas del plan |
+| `tests/conftest.py` | — | Guarda en caché las simulaciones para que las pruebas las compartan |
+
+### Las 9 pruebas de validación del plan
+
+| Prueba del plan | Caso | Criterio exigido | Dónde |
+|-----------------|------|------------------|-------|
+| Oscilador aislado | K = 0 | Coincide con la fórmula analítica con error < 10⁻⁸ Q₀; con DOP853, los demás nodos quedan exactamente en 0 | `test_oscilador_aislado` |
+| Conservación | K = 0, R = 0 | E₀ constante, con variación < 10⁻⁸ | `test_conservacion_sin_acoplamiento_ni_resistencia` |
+| Decaimiento | K = 0, R > 0 | E(t) igual a la fórmula del punto 2, paso 14 (error < 10⁻⁸ E₀); cae a < 10⁻⁴ E₀ en T | `test_decaimiento_sin_acoplamiento` |
+| Balance general | K > 0, R > 0 | Residuo de dH/dt = −RΣIᵢ² < 10⁻⁶, en 4 redes × 3 valores de κ | `test_balance_de_H` |
+| Dos nodos | N = 2 | Batidos exactos con ω₀ y √(ω₀² + 2K), error < 10⁻⁸ Q₀ | `test_dos_nodos_*` |
+| Modo uniforme | Las 4 redes | ΣQᵢ(t) igual al oscilador aislado, error < 10⁻⁸ Q₀ | `test_modo_uniforme` |
+| Simetría | Anillo | Nodos +d y −d iguales, error < 10⁻⁹ Q₀; también la diagonal de la malla | `test_simetria_*` |
+| Convergencia | RK4 | Orden entre 3.8 y 4.2 en tres divisiones del paso | `test_rk4_orden_4` |
+| Referencia | DOP853 frente a la solución modal | Error < 10⁻⁷ Q₀, en 4 redes × 3 valores de κ y con κ = 10 | `test_dop853_coincide_con_modal*` |
+
+### Pruebas adicionales
+
+- **Teoría, punto 5:**
+  - H(0) = E₀(1 + k₀κ);
+  - H nunca aumenta;
+  - ΣEᵢ ≤ H(0);
+  - con R = 0, H se conserva y ΣEᵢ no;
+  - ΣEᵢ puede superar E₀.
+- **Teoría, punto 6:** H decae como e^(−γt) para cualquier κ.
+- **Balance de una malla:** dEᵢ/dt = −RIᵢ² + Pᵢ.
+- **Identidades de energía:**
+  - U es igual a la suma sobre los enlaces;
+  - ΣPᵢ = −dU/dt.
+- **Solución modal:**
+  - es exacta en los regímenes crítico y sobreamortiguado;
+  - funciona con condiciones iniciales arbitrarias;
+  - los pesos modales suman δᵢ₀;
+  - el modo uniforme pesa 1/N.
+
+### Un caso que hubo que ajustar
+
+En la prueba del oscilador aislado se exigía que los demás nodos quedaran
+exactamente en cero. DOP853 lo cumple. La solución modal da unos 10⁻¹⁶ Q₀,
+porque pasa por los autovectores y queda redondeo de punto flotante. No es un
+error: para ese método el criterio quedó en < 10⁻¹³ Q₀.
+
+## 8. Hallazgos y decisiones
 
 | Tema | Hallazgo o decisión |
 |------|---------------------|
@@ -350,19 +440,14 @@ Coincide con la Fase 1 en todas las columnas.
 | Balance de energía | Se verifica en forma integrada con Simpson, no derivando datos muestreados. |
 | H decae como e^(−γt) | Se confirmó en la malla: H e^(γt)/H(0) se mantiene entre 0.985 y 1.016 para cualquier κ. K y la topología reparten la energía, pero no cambian el ritmo con que se pierde. |
 
-## 8. Próximos pasos
+## 9. Próximos pasos
 
-1. **Pruebas del modelo:**
-   - oscilador aislado;
-   - conservación con R = 0;
-   - decaimiento e^(−γt);
-   - balance dH/dt = −RΣIᵢ²;
-   - dos nodos;
-   - modo uniforme;
-   - simetría del anillo;
-   - comparación con la solución modal.
-2. **RK4 propio** y su prueba de convergencia de orden 4.
-3. **Pseudocódigo y diagrama de flujo** del código.
+1. **Pseudocódigo y diagrama de flujo** del código. Es el último entregable de
+   la Fase 2 y cuenta en el criterio «Programación y lógica».
+2. **Revisión de cierre de la Fase 2:** todas las pruebas aprobadas ✅ y el
+   código revisado por otro integrante.
+3. **Fase 3:** tiempos de llegada y estadísticas por distancia en
+   `analisis.py`, y después los scripts de los experimentos E1 a E5.
 
 ## Registro de cambios
 
@@ -373,3 +458,4 @@ Coincide con la Fase 1 en todas las columnas.
 | 6 nov 2026 | `pytest.ini` y `tests/test_redes.py` (47 pruebas); enunciado copiado a `docs/` |
 | 6 nov 2026 | `modelo.py`: parámetros, DOP853, solución modal y `simular`, verificados frente a la solución exacta; se crea esta bitácora |
 | 6 nov 2026 | `analisis.py`, parte de energía: Eᵢ, U, H, potencias, balance integrado, ⟨Eᵢ⟩ y fracción de energía. `Simulacion` ahora guarda Λ. Resultados verificados frente a la teoría |
+| 6 nov 2026 | RK4 propio en `modelo.py` (método "rk4"). `tests/test_modelo.py`, `tests/test_energia.py` y `tests/conftest.py`: las 9 pruebas de validación del plan y otras más; 120 pruebas aprobadas |
