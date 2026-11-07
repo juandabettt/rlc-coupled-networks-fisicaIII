@@ -29,12 +29,12 @@ proyecto_final_fisicaIII/
 ├── requirements.txt     # Dependencias de Python
 ├── pytest.ini           # Configuración de las pruebas
 ├── .gitignore
-├── docs/                # Teoría (Fase 1), plan y enunciado en PDF
+├── docs/                # Teoría (Fase 1), plan, enunciado y bitácora de desarrollo
 ├── red_rlc/             # Paquete con el código del modelo (Fase 2 en adelante)
 │   ├── __init__.py
 │   ├── redes.py         # Generación de topologías y distancias       (listo)
-│   ├── modelo.py        # Sistema de primer orden e integración        (pendiente)
-│   ├── analisis.py      # Energías, tiempos de llegada, estadísticas   (pendiente)
+│   ├── modelo.py        # Sistema de primer orden e integración        (en curso)
+│   ├── analisis.py      # Energías, tiempos de llegada, estadísticas   (en curso)
 │   ├── ajustes.py       # Ajustes funcionales                          (pendiente)
 │   ├── graficos.py      # Gráficos G1 a G10                            (pendiente)
 │   └── videos.py        # Animaciones de log₁₀(Eᵢ/E₀)                  (pendiente)
