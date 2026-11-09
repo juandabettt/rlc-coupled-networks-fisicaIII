@@ -255,6 +255,17 @@ def construir(nombre: str, semilla: int = SEMILLA_BASE, **kwargs) -> Red:
     return constructores[nombre](**kwargs)
 
 
+def con_fuente(red: Red, fuente: int) -> Red:
+    """La misma red con otra fuente (recalcula distancias y caminos).
+
+    Conserva el nombre, la semilla y los intentos. Se usa en el experimento
+    E5 para estudiar el efecto de la posición de la fuente.
+    """
+    if not 0 <= fuente < red.N:
+        raise ValueError(f"Fuente {fuente} fuera de rango (0..{red.N - 1}).")
+    return _crear_red(red.nombre, red.grafo, int(fuente), red.semilla, red.intentos)
+
+
 def semillas(n: int = N_REALIZACIONES, semilla_base: int = SEMILLA_BASE) -> list[int]:
     """Semillas fijas para n realizaciones: semilla_base, semilla_base + 1, …"""
     return [semilla_base + i for i in range(n)]

@@ -1,0 +1,9 @@
+# Solo para generar los documentos de la Fase 6 (informe y diapositivas).
+# El cálculo (Fases 2 a 5) no los necesita: ver requirements.txt.
+-r requirements.txt
+# Informe en Word (.docx)
+python-docx>=1.1
+# Diapositivas en PowerPoint (.pptx)
+python-pptx>=1.0
+# Convertir páginas de PDF en imágenes para revisar el informe
+pymupdf>=1.24

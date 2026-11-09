@@ -198,6 +198,21 @@ def test_nodos_mal_numerados_rechazados():
         redes._crear_red("prueba", G, 1)
 
 
+def test_con_fuente():
+    m = redes.malla()
+    e = redes.con_fuente(m, 0)
+    assert e.fuente == 0 and e.distancia_maxima == 18
+    assert np.array_equal(e.A, m.A)                       # mismo grafo
+    assert m.fuente == 44                                 # el original no cambia
+    with pytest.raises(ValueError):
+        redes.con_fuente(m, 100)
+
+
+def test_tamanos_distintos():
+    assert redes.malla(lado=6).N == 36 and redes.malla(lado=6).distancia_maxima == 6
+    assert redes.anillo(N=50).distancia_maxima == 13
+
+
 def test_topologia_desconocida():
     with pytest.raises(ValueError):
         redes.construir("estrella")
